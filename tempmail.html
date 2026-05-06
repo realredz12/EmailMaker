@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultMail — Temporary Email, Saved Forever</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #00e5ff;
+    --accent2: #ff3cac;
+    --text: #e8e8f0;
+    --muted: #6a6a8a;
+    --green: #00ffaa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Grid BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%);
+    top: -200px; left: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow2 {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,60,172,0.06) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Layout */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 32px 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .badge {
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.2);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* Hero */
+  .hero { padding: 40px 0 32px; text-align: center; }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 440px; margin: 0 auto; }
+
+  /* Email Box */
+  .email-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin: 32px 0 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .email-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .email-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .email-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .email-address {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    color: var(--accent);
+    min-width: 200px;
+    cursor: text;
+    outline: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,229,255,0.3); }
+  .btn:active { transform: translateY(0); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); box-shadow: none; }
+  .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; }
+  .btn-danger { background: rgba(255,60,172,0.15); color: var(--accent2); border: 1px solid rgba(255,60,172,0.2); }
+  .btn-danger:hover { background: rgba(255,60,172,0.25); box-shadow: none; }
+
+  .actions-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 36px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+  .tab {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    background: var(--card);
+    border-color: var(--border);
+    border-bottom-color: var(--card);
+    margin-bottom: -1px;
+  }
+  .tab-count {
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Inbox */
+  .inbox {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    min-height: 300px;
+  }
+  .inbox-toolbar {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    outline: none;
+    width: 200px;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    gap: 12px;
+  }
+  .empty-icon { font-size: 40px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+
+  /* Email List */
+  .email-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+  .email-item:last-child { border-bottom: none; }
+  .email-item:hover { background: rgba(0,229,255,0.03); }
+  .email-item.unread { border-left: 3px solid var(--accent); }
+  .email-item.unread .email-subject { color: var(--accent); }
+  .email-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #000;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .email-meta { min-width: 0; }
+  .email-from { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .email-subject { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+  .email-preview { font-size: 12px; color: var(--muted); opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-right { text-align: right; flex-shrink: 0; }
+  .email-time { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+  .tag-new { background: rgba(0,229,255,0.1); color: var(--accent); }
+  .tag-saved { background: rgba(0,255,170,0.1); color: var(--green); }
+
+  /* Email Detail Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky; top: 0;
+    background: var(--card);
+    z-index: 1;
+  }
+  .modal-title { font-size: 17px; font-weight: 800; line-height: 1.3; }
+  .modal-from { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .close-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .modal-body { padding: 24px; }
+  .modal-body p { font-size: 14px; line-height: 1.7; color: var(--text); opacity: 0.85; }
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    z-index: 200;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast-icon { color: var(--green); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px 0 30px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Custom domain input */
+  .custom-domain {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: 12px;
+  }
+  .custom-prefix {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    width: 160px;
+    transition: border-color 0.15s;
+  }
+  .custom-prefix:focus { border-color: var(--accent); }
+  .domain-suffix {
+    background: rgba(0,229,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  @media (max-width: 600px) {
+    .email-display { flex-direction: column; }
+    .email-address { width: 100%; }
+    .tab { padding: 8px 12px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<div class="container">
+  <header>
+    <div class="logo">Vault<span>Mail</span></div>
+    <div class="badge">✦ Emails stored forever</div>
+  </header>
+
+  <div class="hero">
+    <h1>Temp email.<br><em>Permanently saved.</em></h1>
+    <p>Disposable addresses that actually let you revisit your emails — no account needed.</p>
+  </div>
+
+  <!-- Email Generator Box -->
+  <div class="email-box">
+    <div class="email-label">Your active address</div>
+    <div class="email-display">
+      <div class="email-address" id="currentEmail">generating...</div>
+      <button class="btn" onclick="copyEmail()">📋 Copy</button>
+    </div>
+
+    <div style="margin-top:14px;">
+      <div class="email-label">Custom address (optional)</div>
+      <div class="custom-domain">
+        <input class="custom-prefix" id="customPrefix" placeholder="yourname" maxlength="30">
+        <div class="domain-suffix">@vaultmail.tmp</div>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-outline btn-sm" onclick="useCustom()">✦ Use Custom</button>
+      <button class="btn btn-outline btn-sm" onclick="generateEmail()">⟳ Generate New</button>
+      <button class="btn btn-outline btn-sm" onclick="simulateReceive()">⚡ Simulate Email</button>
+    </div>
+
+    <div class="status-bar">
+      <div class="dot"></div>
+      <span id="statusText">Listening for incoming mail...</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('inbox', this)">
+      📥 Inbox
+      <span class="tab-count" id="inboxCount">0</span>
+    </div>
+    <div class="tab" onclick="switchTab('saved', this)">
+      🔒 Saved
+      <span class="tab-count" id="savedCount">0</span>
+    </div>
+    <div class="tab" onclick="switchTab('addresses', this)">
+      📬 My Addresses
+    </div>
+  </div>
+
+  <!-- Inbox Panel -->
+  <div class="inbox" id="panel-inbox">
+    <div class="inbox-toolbar">
+      <input class="search-input" placeholder="Search emails..." oninput="filterEmails(this.value)" id="searchInput">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="saveAll()">Save All</button>
+        <button class="btn btn-danger btn-sm" onclick="clearInbox()">Clear</button>
+      </div>
+    </div>
+    <div id="emailList">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No emails yet. Copy your address and use it somewhere!</p>
+        <p style="font-size:12px; font-family:'Space Mono',monospace;">Or click "Simulate Email" to test.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Panel -->
+  <div class="inbox" id="panel-saved" style="display:none;">
+    <div class="inbox-toolbar">
+      <span style="font-size:13px;color:var(--muted);">Emails you've saved persist here forever</span>
+      <button class="btn btn-danger btn-sm" onclick="clearSaved()">Clear Saved</button>
+    </div>
+    <div id="savedList">
+      <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <p>No saved emails yet. Open an email and click Save.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Addresses Panel -->
+  <div class="inbox" id="panel-addresses" style="display:none;">
+    <div class="inbox-toolbar">
+      <span style="font-size:13px;color:var(--muted);">All addresses you've used</span>
+      <button class="btn btn-danger btn-sm" onclick="clearAddresses()">Clear All</button>
+    </div>
+    <div id="addressList">
+      <div class="empty-state">
+        <div class="empty-icon">📬</div>
+        <p>No address history yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-overlay" id="emailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalSubject"></div>
+        <div class="modal-from" id="modalFrom"></div>
+        <div class="modal-from" id="modalTime"></div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="modalBody"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="saveCurrentEmail()">🔒 Save Email</button>
+      <button class="btn btn-outline btn-sm" onclick="deleteCurrentEmail()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastMsg"></span>
+</div>
+
+<footer>VaultMail — your temporary inbox, permanently stored in your browser</footer>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────
+const STORAGE_KEY = 'vaultmail_data';
+let state = {
+  currentEmail: '',
+  emails: [],
+  savedEmails: [],
+  usedAddresses: []
+};
+
+// Load from localStorage
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = { ...state, ...JSON.parse(raw) };
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+// ─── Email Generation ─────────────────────────────────────────────
+const adjectives = ['swift','dark','neon','quiet','bright','shadow','crystal','iron','void','ghost'];
+const nouns = ['fox','river','storm','blade','echo','pulse','drift','wave','spark','node'];
+const domains = ['@vaultmail.tmp','@dropbox.tmp','@zeroinbox.tmp'];
+
+function generateEmail() {
+  const adj = adjectives[Math.floor(Math.random()*adjectives.length)];
+  const noun = nouns[Math.floor(Math.random()*nouns.length)];
+  const num = Math.floor(Math.random()*900)+100;
+  const domain = domains[Math.floor(Math.random()*domains.length)];
+  setCurrentEmail(adj + noun + num + domain);
+}
+
+function useCustom() {
+  const prefix = document.getElementById('customPrefix').value.trim();
+  if (!prefix) { showToast('Enter a custom prefix first'); return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(prefix)) { showToast('Only letters, numbers, . _ - allowed'); return; }
+  setCurrentEmail(prefix + '@vaultmail.tmp');
+}
+
+function setCurrentEmail(email) {
+  state.currentEmail = email;
+  document.getElementById('currentEmail').textContent = email;
+
+  if (!state.usedAddresses.includes(email)) {
+    state.usedAddresses.unshift(email);
+    if (state.usedAddresses.length > 20) state.usedAddresses.pop();
+  }
+  saveState();
+  renderAddresses();
+  showToast('Address set: ' + email);
+}
+
+// ─── Simulate Receive ─────────────────────────────────────────────
+const sampleEmails = [
+  { from: 'noreply@github.com', subject: 'Action required: Verify your GitHub account', body: 'Hi there! Please verify your GitHub email address by clicking the button below. This link will expire in 24 hours. Your verification code is: 847291. If you did not create a GitHub account, you can safely ignore this email.' },
+  { from: 'welcome@notion.so', subject: 'Welcome to Notion — get started', body: 'You\'re in! Start building your workspace. Create your first page, invite a teammate, or explore 1000+ templates built by the community. We\'re glad you joined.' },
+  { from: 'security@discord.com', subject: 'New login to your Discord account', body: 'We noticed a new sign-in to your Discord account from Chrome on Windows. If this was you, no action is needed. If not, please reset your password immediately and enable 2FA.' },
+  { from: 'team@figma.com', subject: 'Your 30-day free trial is starting', body: 'Welcome to Figma Professional. Your trial gives you unlimited projects, version history, and team libraries for the next 30 days. No credit card required.' },
+  { from: 'promo@shopify.com', subject: '🎉 Your store is ready — launch today!', body: 'Your Shopify store has been created successfully. Add your first product, set up payments, and start selling. Your free trial lasts 14 days — no setup fees.' },
+];
+
+function simulateReceive() {
+  const sample = sampleEmails[Math.floor(Math.random()*sampleEmails.length)];
+  const email = {
+    id: Date.now(),
+    to: state.currentEmail,
+    from: sample.from,
+    subject: sample.subject,
+    body: sample.body,
+    time: new Date().toISOString(),
+    read: false
+  };
+  state.emails.unshift(email);
+  saveState();
+  renderEmails();
+  updateCounts();
+  showToast('New email from ' + sample.from.split('@')[1]);
+  document.getElementById('statusText').textContent = 'Last received: ' + formatTime(email.time);
+}
+
+// ─── Rendering ────────────────────────────────────────────────────
+function renderEmails(filter = '') {
+  const list = document.getElementById('emailList');
+  const emails = state.emails.filter(e =>
+    !filter ||
+    e.from.toLowerCase().includes(filter) ||
+    e.subject.toLowerCase().includes(filter) ||
+    e.body.toLowerCase().includes(filter)
+  );
+
+  if (!emails.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>${filter ? 'No emails match your search.' : 'No emails yet.'}</p>
+      ${!filter ? '<p style="font-size:12px;font-family:\'Space Mono\',monospace;">Click "Simulate Email" to test.</p>' : ''}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = emails.map(e => `
+    <div class="email-item ${e.read ? '' : 'unread'}" onclick="openEmail(${e.id})">
+      <div class="email-avatar">${e.from[0].toUpperCase()}</div>
+      <div class="email-meta">
+        <div class="email-from">${escHtml(e.from)}</div>
+        <div class="email-subject">${escHtml(e.subject)}</div>
+        <div class="email-preview">${escHtml(e.body.substring(0, 80))}...</div>
+      </div>
+      <div class="email-right">
+        <div class="email-time">${formatTime(e.time)}</div>
+        <span class="tag ${e.read ? '' : 'tag-new'}">${e.read ? 'read' : 'new'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSaved() {
+  const list = document.getElementById('savedList');
+  if (!state.savedEmails.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🔒</div><p>No saved emails yet.</p></div>`;
+    return;
+  }
+  list.innerHTML = state.savedEmails.map(e => `
+    <div class="email-item" onclick="openSavedEmail(${e.id})">
+      <div class="email-avatar">${e.from[0].toUpperCase()}</div>
+      <div class="email-meta">
+        <div class="email-from">${escHtml(e.from)}</div>
+        <div class="email-subject">${escHtml(e.subject)}</div>
+        <div class="email-preview">${escHtml(e.body.substring(0, 80))}...</div>
+      </div>
+      <div class="email-right">
+        <div class="email-time">${formatTime(e.time)}</div>
+        <span class="tag tag-saved">saved</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAddresses() {
+  const list = document.getElementById('addressList');
+  if (!state.usedAddresses.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📬</div><p>No address history yet.</p></div>`;
+    return;
+  }
+  list.innerHTML = state.usedAddresses.map(addr => `
+    <div class="email-item" style="cursor:default;">
+      <div class="email-avatar" style="background:linear-gradient(135deg,#6a3de8,#00e5ff);">@</div>
+      <div class="email-meta">
+        <div class="email-from" style="font-family:'Space Mono',monospace;font-size:13px;">${escHtml(addr)}</div>
+        <div class="email-preview">${state.emails.filter(e=>e.to===addr).length} emails received</div>
+      </div>
+      <div class="email-right">
+        <button class="btn btn-outline btn-sm" onclick="setCurrentEmail('${escHtml(addr)}');showToast('Switched to ${escHtml(addr)}')">Use</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── Modal ────────────────────────────────────────────────────────
+let currentOpenId = null;
+let currentOpenSaved = false;
+
+function openEmail(id) {
+  const email = state.emails.find(e => e.id === id);
+  if (!email) return;
+  email.read = true;
+  saveState();
+  renderEmails(document.getElementById('searchInput').value);
+  updateCounts();
+  currentOpenId = id;
+  currentOpenSaved = false;
+  showModal(email);
+}
+
+function openSavedEmail(id) {
+  const email = state.savedEmails.find(e => e.id === id);
+  if (!email) return;
+  currentOpenId = id;
+  currentOpenSaved = true;
+  showModal(email, true);
+}
+
+function showModal(email, isSaved = false) {
+  document.getElementById('modalSubject').textContent = email.subject;
+  document.getElementById('modalFrom').textContent = 'From: ' + email.from + ' → ' + email.to;
+  document.getElementById('modalTime').textContent = new Date(email.time).toLocaleString();
+  document.getElementById('modalBody').textContent = email.body;
+  document.querySelector('.modal-footer').innerHTML = isSaved
+    ? `<button class="btn btn-danger btn-sm" onclick="deleteSavedEmail()">🗑 Remove from Saved</button>`
+    : `<button class="btn btn-sm" onclick="saveCurrentEmail()">🔒 Save Email</button>
+       <button class="btn btn-outline btn-sm" onclick="deleteCurrentEmail()">🗑 Delete</button>`;
+  document.getElementById('emailModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('emailModal').classList.remove('open');
+  currentOpenId = null;
+}
+
+function saveCurrentEmail() {
+  const email = state.emails.find(e => e.id === currentOpenId);
+  if (!email) return;
+  if (state.savedEmails.find(e => e.id === email.id)) { showToast('Already saved!'); return; }
+  state.savedEmails.unshift({...email});
+  saveState();
+  updateCounts();
+  renderSaved();
+  showToast('Email saved permanently 🔒');
+}
+
+function deleteCurrentEmail() {
+  state.emails = state.emails.filter(e => e.id !== currentOpenId);
+  saveState();
+  renderEmails();
+  updateCounts();
+  closeModal();
+  showToast('Email deleted');
+}
+
+function deleteSavedEmail() {
+  state.savedEmails = state.savedEmails.filter(e => e.id !== currentOpenId);
+  saveState();
+  renderSaved();
+  updateCounts();
+  closeModal();
+  showToast('Removed from saved');
+}
+
+// ─── Bulk Actions ─────────────────────────────────────────────────
+function saveAll() {
+  let added = 0;
+  state.emails.forEach(e => {
+    if (!state.savedEmails.find(s => s.id === e.id)) {
+      state.savedEmails.unshift({...e});
+      added++;
+    }
+  });
+  saveState(); renderSaved(); updateCounts();
+  showToast(added ? `Saved ${added} email(s)` : 'All already saved');
+}
+
+function clearInbox() {
+  if (!state.emails.length) return;
+  state.emails = [];
+  saveState(); renderEmails(); updateCounts();
+  showToast('Inbox cleared');
+}
+
+function clearSaved() {
+  state.savedEmails = [];
+  saveState(); renderSaved(); updateCounts();
+  showToast('Saved emails cleared');
+}
+
+function clearAddresses() {
+  state.usedAddresses = [state.currentEmail];
+  saveState(); renderAddresses();
+  showToast('Address history cleared');
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['inbox','saved','addresses'].forEach(p => {
+    document.getElementById('panel-'+p).style.display = p === name ? '' : 'none';
+  });
+  if (name === 'saved') renderSaved();
+  if (name === 'addresses') renderAddresses();
+}
+
+function filterEmails(val) {
+  renderEmails(val.toLowerCase());
+}
+
+// ─── Copy ─────────────────────────────────────────────────────────
+function copyEmail() {
+  navigator.clipboard.writeText(state.currentEmail).then(() => showToast('Copied! ' + state.currentEmail));
+}
+
+// ─── Utils ────────────────────────────────────────────────────────
+function updateCounts() {
+  document.getElementById('inboxCount').textContent = state.emails.filter(e=>!e.read).length || state.emails.length;
+  document.getElementById('savedCount').textContent = state.savedEmails.length;
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return d.toLocaleDateString();
+}
+
+function escHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Close modal on overlay click
+document.getElementById('emailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── Init ─────────────────────────────────────────────────────────
+loadState();
+if (!state.currentEmail) generateEmail();
+else document.getElementById('currentEmail').textContent = state.currentEmail;
+renderEmails();
+updateCounts();
+</script>
+</body>
+</html>
